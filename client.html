@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.IO Client</title>
+  <!-- Include the Socket.IO client library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js"></script>
+</head>
+<body>
+<h1>Socket.IO Client</h1>
+<label for="tokenInput">Authentication Token </label><input type="text" id="tokenInput" placeholder="Enter token">
+<br>
+<br>
+<button id="connectButton">Connect</button>
+<button id="disconnectButton" style="display: none;">Disconnect</button>
+<br>
+<button id="joinProject_1" style="display: none;">Join Project-1</button>
+<button id="joinProject_2" style="display: none;">Join Project-2</button>
+<button id="joinProject_3" style="display: none;">Join Project-3</button>
+<div id="messages"></div>
+
+<script>
+  let socket;
+
+  function toggleButtons(isConnected) {
+    document.getElementById('connectButton').style.display = isConnected ? 'none' : 'block';
+    document.getElementById('disconnectButton').style.display = isConnected ? 'block' : 'none';
+    document.getElementById('joinProject_1').style.display = isConnected ? 'block' : 'none';
+    document.getElementById('joinProject_2').style.display = isConnected ? 'block' : 'none';
+    document.getElementById('joinProject_3').style.display = isConnected ? 'block' : 'none';
+  }
+
+  document.getElementById('connectButton').addEventListener('click', () => {
+    const token = document.getElementById('tokenInput').value;
+    socket = io('http://localhost:3000/events', {
+      auth: {
+        token: token // Use the token from the input field
+      }
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to server');
+      toggleButtons(true);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server');
+      toggleButtons(false);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error.message);
+    });
+
+    socket.on('chat', (data) => {
+      console.log('Message from server:', data);
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML += `<p>${data}</p>`;
+    });
+
+    socket.on('join_project', (data) => {
+      console.log('Message from server:', data);
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML += `<p>${data}</p>`;
+    });
+
+    socket.on('exception', (error) => {
+      console.error('Exception:', error);
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML += `<p style="color: red;">Exception: ${error.message}</p>`;
+    });
+  });
+
+  document.getElementById('disconnectButton').addEventListener('click', () => {
+    if (socket) {
+      socket.disconnect();
+      toggleButtons(false);
+    }
+  });
+
+  document.getElementById('joinProject_1').addEventListener('click', () => {
+    socket.emit('join_project', { projectId: 'project_one' });
+  });
+
+  document.getElementById('joinProject_2').addEventListener('click', () => {
+    socket.emit('join_project', { projectId: 'project_two' });
+  });
+
+  document.getElementById('joinProject_3').addEventListener('click', () => {
+    socket.emit('join_project', { projectId: 'project_three' });
+  });
+</script>
+</body>
+</html>
